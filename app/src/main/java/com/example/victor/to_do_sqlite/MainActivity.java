@@ -14,14 +14,23 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ListView;
 
 import com.example.victor.to_do_sqlite.db.TaskContract;
 import com.example.victor.to_do_sqlite.db.TaskDbHelper;
 
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity {
 
     private TaskDbHelper mHelper; //Add a private instance of TaskDbHelper in the MainActivity class
+    private ListView mTaskListView; //Adds an instance of the listview created in the mainactivity alyout
+    private ArrayAdapter<String> mAdapter; //This arrayadapter will help populate the listview with the data
+
+
+
     private static final String TAG = "MainActivity"; //This is just a tag
 
 
@@ -36,8 +45,12 @@ public class MainActivity extends AppCompatActivity {
 
         //initialize the private instance of TaskDbHelper in the onCreate() method:
         mHelper = new TaskDbHelper(this);
+        mTaskListView = (ListView) findViewById(R.id.list_todo); //Initialize the refrence to the listview
+
 
         //show a list of all the tasks stored in the database
+        /*
+        //Start database reading here
         SQLiteDatabase db = mHelper.getReadableDatabase(); //Accesses the readable
         Cursor cursor = db.query(TaskContract.TaskEntry.TABLE,
                 new String[]{TaskContract.TaskEntry._ID, TaskContract.TaskEntry.COL_TASK_TITLE},
@@ -48,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
         }
         cursor.close();
         db.close();
+
+        //End database reading here
+        */
 
 
 
@@ -61,6 +77,9 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+        updateUI();//This will update the UI immmediately data is changed: Do it her and also in the on create method
+
     }
 
     @Override
@@ -105,6 +124,8 @@ public class MainActivity extends AppCompatActivity {
                                     values,
                                     SQLiteDatabase.CONFLICT_REPLACE);
                             db.close();
+
+                            updateUI();//This will update the UI immmediately data is changed: Do it her and also in the on create method
                         }
                     })
                     .setNegativeButton("Cancel", null)
@@ -114,5 +135,37 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+
+
+
+    //UpdateUI method to query and display data from the sqlite database
+
+    private void updateUI() {
+        ArrayList<String> taskList = new ArrayList<>();
+        SQLiteDatabase db = mHelper.getReadableDatabase();
+        Cursor cursor = db.query(TaskContract.TaskEntry.TABLE,
+                new String[]{TaskContract.TaskEntry._ID, TaskContract.TaskEntry.COL_TASK_TITLE},
+                null, null, null, null, null);
+        while (cursor.moveToNext()) {
+            int idx = cursor.getColumnIndex(TaskContract.TaskEntry.COL_TASK_TITLE);
+            taskList.add(cursor.getString(idx));
+        }
+
+        if (mAdapter == null) {
+            mAdapter = new ArrayAdapter<>(this,
+                    R.layout.item_todo, //What layout to use
+                    R.id.task_title,    //What view to use
+                    taskList);          //Where to get all that data
+            mTaskListView.setAdapter(mAdapter); //Set it to the adapter of the list view instance
+        } else {
+            mAdapter.clear();
+            mAdapter.addAll(taskList);
+            mAdapter.notifyDataSetChanged();
+        }
+
+        cursor.close();
+        db.close();
     }
 }
