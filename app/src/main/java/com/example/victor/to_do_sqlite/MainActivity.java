@@ -1,6 +1,8 @@
 package com.example.victor.to_do_sqlite;
 
+import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -13,8 +15,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 
+import com.example.victor.to_do_sqlite.db.TaskContract;
+import com.example.victor.to_do_sqlite.db.TaskDbHelper;
+
 public class MainActivity extends AppCompatActivity {
+
+    private TaskDbHelper mHelper; //Add a private instance of TaskDbHelper in the MainActivity class
     private static final String TAG = "MainActivity"; //This is just a tag
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +30,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+
+
+        //initialize the private instance of TaskDbHelper in the onCreate() method:
+        mHelper = new TaskDbHelper(this);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -61,8 +74,20 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton("Add", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
+
+                            // adapt MainActivity to store data in the database
+                            //String task = String.valueOf(taskEditText.getText()); //Gets the string from the edit text
+                            //Log.d(TAG, "Task to add: " + task); //Logs that item to test
+
                             String task = String.valueOf(taskEditText.getText());
-                            Log.d(TAG, "Task to add: " + task);
+                            SQLiteDatabase db = mHelper.getWritableDatabase();
+                            ContentValues values = new ContentValues();
+                            values.put(TaskContract.TaskEntry.COL_TASK_TITLE, task);
+                            db.insertWithOnConflict(TaskContract.TaskEntry.TABLE,
+                                    null,
+                                    values,
+                                    SQLiteDatabase.CONFLICT_REPLACE);
+                            db.close();
                         }
                     })
                     .setNegativeButton("Cancel", null)
