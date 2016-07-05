@@ -2,6 +2,7 @@ package com.example.victor.to_do_sqlite;
 
 import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -36,6 +37,22 @@ public class MainActivity extends AppCompatActivity {
         //initialize the private instance of TaskDbHelper in the onCreate() method:
         mHelper = new TaskDbHelper(this);
 
+        //show a list of all the tasks stored in the database
+        SQLiteDatabase db = mHelper.getReadableDatabase(); //Accesses the readable
+        Cursor cursor = db.query(TaskContract.TaskEntry.TABLE,
+                new String[]{TaskContract.TaskEntry._ID, TaskContract.TaskEntry.COL_TASK_TITLE},
+                null, null, null, null, null);
+        while(cursor.moveToNext()) {  //Write each item on iteration
+            int idx = cursor.getColumnIndex(TaskContract.TaskEntry.COL_TASK_TITLE);
+            Log.d(TAG, "Task: " + cursor.getString(idx));
+        }
+        cursor.close();
+        db.close();
+
+
+
+
+        //Create the fab button
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
